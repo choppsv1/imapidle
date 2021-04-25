@@ -1,0 +1,67 @@
+
+* imapidle - mbsync compatible IDLE aide
+
+This utility will connect to your IMAP accounts and run the IMAP IDLE command on
+the INBOX for each account. When new mail arrives a script will be invoked to
+update mail from that account. Periodically the script will be invoked to do a
+full update from the account.
+
+The accounts details are obtained from your .mbsyncrc file.
+
+This project was inspired by https://github.com/leoc/mbidle
+
+** Installing
+
+You can use ~go~ to install ~imapidle~ thusly:
+
+#+begin_src bash
+  go install github.com/choppsv1/imapidle
+#+end_src
+
+** Invoking
+
+To simply IDLE on all defined Accounts (really IMAPStores) INBOX invoke
+~imapidle~ with no arguments. This will choose the first channel defined for each
+IMAPStore and idle and update on that channel using ":INBOX" as a further
+restriction.
+
+#+begin_src bash
+   $ imapidle
+#+end_src
+
+If you wish to restrict the stores checked, or specify special INBOX folder
+names you can do so on the command line using tuples of the form
+~storename[:channel-name[:inbox-name]]~. For example,
+
+#+begin_src bash
+   imapidle gmail-remote:gmail-channel
+#+end_src
+
+~imapidle~ will append ":INBOX" to the channel name (if there isn't
+":something" explicit specified) to further select the INBOX only IMAP mailbox.
+
+** Update Script: ~/.imapidle-update
+
+~imapidle~ invokes the update script for 2 reasons:
+
+- When new mail is seen on an account inbox. In this case the script is invoked
+  with the associated channel name. A slight delay is taken to allow for
+  multiple accounts to become active (e.g., this might happen if you had a
+  second account CC'd in the received email). If multiple accounts need updating
+  the script will be invoked with each channel name as a separate parameter
+  e.g.,:
+
+#+begin_src bash
+  ~/.imapidle-update my-channel1 my-channe2
+#+end_src
+
+- Periodically (default 5 minutes) a full update is requested by invoking the
+  update script with no arguments. This should then update all your accounts and
+  sub-folders as well as your INBOXes.
+
+** Other Parameters
+
+~imapidle~ supports changing the periodic timer interval, the update script
+path, the mbsyncrc path in addition to ~verbose~ and ~debug~ logging options.
+
+Use ~imapidle -h~ to see list the options.
