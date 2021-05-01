@@ -96,6 +96,7 @@ func main() {
 	flag.StringVar(&updateScript, "update-script", "~/.imapidle-update", "Script to run when an INBOX is updated")
 	flag.StringVar(&mbsyncrc, "mbsyncrc", "~/.mbsyncrc", "Location of mbsync config file")
 	flag.DurationVar(&interval, "full-interval", DefPollInterval, "Time between full updates regardless of IDLE")
+	runPassCmdFlag := flag.Bool("run-passcmd-on-parse", false, "Run PassCmds on parsing of .mbsyncrc file")
 	versionFlag := flag.Bool("version", false, "Print the version and exit")
 	verboseFlag := flag.Bool("verbose", false, "Log verbosely")
 	debugFlag := flag.Bool("debug", false, "Log information useful for debugging")
@@ -119,7 +120,7 @@ func main() {
 		TimestampFormat: "01-02-2006 15:04:05.000",
 	})
 
-	stores, err := parseFile(mbsyncrc)
+	stores, err := parseFile(mbsyncrc, *runPassCmdFlag)
 	if err != nil {
 		log.Fatal("parseFile: ", err)
 	}

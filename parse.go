@@ -122,7 +122,7 @@ type IMAPStore struct {
 	Channels []*Channel // config ordered channel list
 }
 
-func finishAccountConfig(name string, config *AccountConfig) error {
+func finishAccountConfig(name string, config *AccountConfig, runPassCmd bool) error {
 	if config.Host == "" {
 		return fmt.Errorf("Host required for %v", name)
 	}
@@ -131,6 +131,12 @@ func finishAccountConfig(name string, config *AccountConfig) error {
 	}
 	if config.password == "" && config.PassCmd == "" {
 		return fmt.Errorf("Password or PassCmd required for %v", name)
+	}
+	if runPassCmd && config.password == "" {
+		var err error
+		if config.password, err = getPass(config.PassCmd); err != nil {
+			return err
+		}
 	}
 	if config.Port == 0 {
 		config.Port = 993
@@ -141,7 +147,7 @@ func finishAccountConfig(name string, config *AccountConfig) error {
 	return nil
 }
 
-func parseFile(fileName string) (map[string]*IMAPStore, error) {
+func parseFile(fileName string, runPassCmd bool) (map[string]*IMAPStore, error) {
 	var accounts = make(map[string]*AccountConfig)
 	var stores = make(map[string]*IMAPStore)
 	var channels = make(map[string]*Channel)
@@ -155,13 +161,13 @@ func parseFile(fileName string) (map[string]*IMAPStore, error) {
 
 	finishSection := func(a *AccountConfig, st *IMAPStore, ch *Channel) error {
 		if a != nil {
-			if err := finishAccountConfig(a.Name, a); err != nil {
+			if err := finishAccountConfig(a.Name, a, runPassCmd); err != nil {
 				return err
 			}
 			accounts[a.Name] = a
 		} else if st != nil {
 			if st.Account == "" {
-				if err := finishAccountConfig(st.Name, &st.Config); err != nil {
+				if err := finishAccountConfig(st.Name, &st.Config, runPassCmd); err != nil {
 					return err
 				}
 			}
