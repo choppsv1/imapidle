@@ -42,7 +42,7 @@ type EventCode int
 
 const (
 	OfflineEvent = iota // Offline reaping the account is safe.
-	NewMailEvent
+	CheckMailEvent
 	FullUpdateEvent
 )
 
@@ -257,7 +257,7 @@ func (a *Account) CheckForNew() {
 	if newCount, err := a.checkForNew(); err != nil {
 		log.Warnf("%v: got error checking for new: %v", a.Name, err)
 	} else if newCount != 0 {
-		a.NewMail(newCount)
+		a.CheckMail(newCount)
 	} else {
 		log.Tracef("%v: CheckForNew returns 0", a.Name)
 	}
@@ -323,13 +323,13 @@ func (a *Account) StopIdle(drain bool) {
 
 }
 
-func (a *Account) NewMail(count int) {
+func (a *Account) CheckMail(count int) {
 	if count == 0 {
 		log.Debugf("%v: signaling FULL update", a)
 		a.eventc <- Event{FullUpdateEvent, a}
 	} else {
 		log.Debugf("%v: signaling NEW mail: %d", a, count)
-		a.eventc <- Event{NewMailEvent, a}
+		a.eventc <- Event{CheckMailEvent, a}
 	}
 }
 
@@ -380,9 +380,19 @@ func (a *Account) Online(c chan Event) {
 			if mu, ok := u.(*client.MailboxUpdate); ok {
 				newCount := int(mu.Mailbox.Messages) - a.MsgCount
 				a.MsgCount = int(mu.Mailbox.Messages)
+				log.Debugf("%v: got MailboxUpdate: Num Messages %v New Count %v", a, int(mu.Mailbox.Messages), newCount)
 				if newCount != 0 {
-					a.NewMail(newCount)
+					a.CheckMail(newCount)
 				}
+			} else if su, ok := u.(*client.StatusUpdate); ok {
+				log.Debugf("%v: got StatusUpdate: Tag %v Type %v Code %v Info %v", a, su.Status.Tag, su.Status.Type,
+					su.Status.Code, su.Status.Info)
+			} else if eu, ok := u.(*client.ExpungeUpdate); ok {
+				log.Debugf("%v: got ExpungeUpdate: Expunge SeqNum %v", a, eu.SeqNum)
+				a.CheckMail(1)
+			} else if msgu, ok := u.(*client.MessageUpdate); ok {
+				log.Debugf("%v: got MessageUpdate: Message SeqNum %v Flags %v", a, msgu.Message.SeqNum, msgu.Message.Flags)
+				a.CheckMail(1)
 			} else {
 				log.Debugf("%v: got Unknown update: %v", a, u)
 			}

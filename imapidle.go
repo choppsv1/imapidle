@@ -209,8 +209,8 @@ func main() {
 		select {
 		case e := <-eventc:
 			switch e.E {
-			case NewMailEvent:
-				log.Debugf("Received NewMailEvent: %v", e.A.Name)
+			case CheckMailEvent:
+				log.Debugf("Received CheckMailEvent: %v", e.A.Name)
 				if !fullUpdate {
 					// Timer hasn't been set yet -- set.
 					if len(update) == 0 {
