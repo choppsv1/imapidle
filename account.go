@@ -1,4 +1,3 @@
-//
 // -*- coding: utf-8 -*-
 //
 // April 24 2021, Christian Hopps <chopps@gmail.com>
@@ -17,7 +16,6 @@
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 // See the License for the specific language governing permissions and
 // limitations under the License.
-//
 package main
 
 import (
@@ -30,6 +28,7 @@ import (
 	"github.com/emersion/go-imap"
 	"github.com/emersion/go-imap/client"
 	"github.com/emersion/go-imap/responses"
+	"github.com/emersion/go-sasl"
 	log "github.com/sirupsen/logrus"
 )
 
@@ -186,9 +185,17 @@ func (a *Account) Login() error {
 		}
 	}
 
-	if err := a.c.Login(a.User, a.password); err != nil {
-		log.Warnf("%v: login %v failed", a.Name, a.User)
-		return err
+	if a.UseXOAuth2 {
+		saslClient := sasl.NewXoauth2Client(a.User, a.password)
+		if err := a.c.Authenticate(saslClient); err != nil {
+			log.Warnf("%v: xauth2 login %v failed", a.Name, a.User)
+			return err
+		}
+	} else {
+		if err := a.c.Login(a.User, a.password); err != nil {
+			log.Warnf("%v: login %v failed", a.Name, a.User)
+			return err
+		}
 	}
 	log.Debugf("%v: %s logged in", a.Name, a.User)
 

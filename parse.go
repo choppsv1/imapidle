@@ -1,4 +1,3 @@
-//
 // -*- coding: utf-8 -*-
 //
 // April 24 2021, Christian Hopps <chopps@gmail.com>
@@ -17,7 +16,6 @@
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 // See the License for the specific language governing permissions and
 // limitations under the License.
-//
 package main
 
 import (
@@ -107,6 +105,7 @@ type AccountConfig struct {
 	SSLVersion string
 	User       string
 	PassCmd    string
+	UseXOAuth2 bool
 	password   string
 }
 
@@ -262,6 +261,8 @@ func parseFile(fileName string, runPassCmd bool) (map[string]*IMAPStore, error) 
 				a.PassCmd = v
 			} else if ok, v := getValue(l, "Password"); ok {
 				a.password = v
+			} else if ok, v := getValue(l, "AuthMechs"); ok {
+				a.UseXOAuth2 = (v == "XOAUTH2")
 			} else if ok, v := getValue(l, "Port"); ok {
 				if a.Port, err = strconv.Atoi(v); err != nil {
 					return nil, err
