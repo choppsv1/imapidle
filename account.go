@@ -164,7 +164,7 @@ func (a *Account) Login() error {
 		// Connect to server
 		tlsConfig := &tls.Config{
 			ServerName: a.Host,
-			NextProtos: []string{a.SSLVersion},
+			NextProtos: []string{"imap"},
 		}
 		if !a.StartTLS {
 			if a.c, err = client.DialTLS(fmt.Sprintf("%s:%d", a.Host, a.Port), tlsConfig); err != nil {
